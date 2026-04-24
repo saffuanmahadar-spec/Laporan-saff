@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laporan Orderan — SAF</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117; --surface: #161b22; --surface2: #21262d;
+    --border: #30363d; --accent: #2ea043; --accent2: #1f6feb;
+    --accent3: #f78166; --text: #e6edf3; --muted: #8b949e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  header {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 14px 20px; display: flex; align-items: center; gap: 12px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo { width: 36px; height: 36px; background: linear-gradient(135deg,#2ea043,#1f6feb); border-radius: 8px; display:flex;align-items:center;justify-content:center; font-size:18px; }
+  header h1 { font-size:15px; font-weight:700; }
+  header p  { font-size:11px; color:var(--muted); }
+
+  /* SETUP BANNER */
+  .setup-banner {
+    background: #161b22; border: 1px solid #f0883e;
+    border-radius: 10px; padding: 16px 20px; margin: 20px;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .setup-banner .icon { font-size: 20px; flex-shrink:0; }
+  .setup-banner h3 { font-size: 13px; font-weight: 700; color: #f0883e; margin-bottom: 4px; }
+  .setup-banner p  { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .setup-banner input {
+    width: 100%; margin-top: 10px;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text);
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    padding: 8px 10px; outline: none;
+  }
+  .setup-banner input:focus { border-color: var(--accent2); }
+  .setup-banner.connected { border-color: var(--accent); }
+  .setup-banner.connected h3 { color: #3fb950; }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 16px 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media(max-width:768px) { .container { grid-template-columns:1fr; } }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .card-header { padding: 13px 18px; border-bottom: 1px solid var(--border); display:flex; align-items:center; gap:8px; }
+  .card-header h2 { font-size: 13px; font-weight: 700; }
+  .card-body { padding: 16px; }
+
+  textarea {
+    width: 100%; height: 270px;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; line-height: 1.7; padding: 12px; resize: vertical; outline: none;
+    transition: border-color .2s;
+  }
+  textarea:focus { border-color: var(--accent2); }
+
+  .btn { display:inline-flex; align-items:center; gap:6px; padding:9px 18px; border-radius:8px; font-family:inherit; font-size:13px; font-weight:600; cursor:pointer; border:none; transition:all .2s; }
+  .btn-green  { background: var(--accent); color:#fff; }
+  .btn-green:hover  { background:#3fb950; transform:translateY(-1px); }
+  .btn-green:disabled { background:#1a3a1a; color:#4a4a4a; cursor:not-allowed; transform:none; }
+  .btn-blue   { background: var(--accent2); color:#fff; }
+  .btn-blue:hover   { background:#388bfd; }
+  .btn-ghost  { background:transparent; border:1px solid var(--border); color:var(--muted); }
+  .btn-ghost:hover  { border-color:var(--text); color:var(--text); }
+  .btn-row { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+
+  .preview-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .preview-field { background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:8px 10px; }
+  .preview-field label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; display:block; margin-bottom:2px; }
+  .preview-field .val { font-size:13px; font-weight:600; word-break:break-word; }
+  .preview-field.full { grid-column:span 2; }
+
+  .tag { display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:700; }
+  .tag-cod { background:#1a4a1a; color:#3fb950; border:1px solid #238636; }
+  .tag-tf  { background:#1a2a4a; color:#79c0ff; border:1px solid #1f6feb; }
+  .tag-bss { background:#2a1a4a; color:#d2a8ff; border:1px solid #8957e5; }
+
+  .full-width { max-width:1100px; margin:0 auto 24px; padding:0 16px; }
+  .tbl-wrap { overflow-x:auto; max-height:360px; overflow-y:auto; }
+  table { width:100%; border-collapse:collapse; font-size:11px; min-width:900px; }
+  thead { position:sticky; top:0; z-index:10; }
+  th { background:var(--surface2); color:var(--muted); font-weight:600; text-align:left; padding:8px 10px; border-bottom:1px solid var(--border); white-space:nowrap; }
+  td { padding:7px 10px; border-bottom:1px solid var(--border); vertical-align:top; }
+  tr:hover td { background:var(--surface2); }
+  .num    { color:#79c0ff; font-family:'JetBrains Mono',monospace; }
+  .profit { color:#3fb950; font-family:'JetBrains Mono',monospace; font-weight:700; }
+  .loss   { color:#f85149; font-family:'JetBrains Mono',monospace; font-weight:700; }
+
+  .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; max-width:1100px; margin:16px auto; padding:0 16px; }
+  @media(max-width:768px) { .stats { grid-template-columns:repeat(2,1fr); } }
+  .stat { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
+  .stat .s-label { font-size:11px; color:var(--muted); margin-bottom:4px; }
+  .stat .s-val { font-size:18px; font-weight:800; font-family:'JetBrains Mono',monospace; }
+  .green { color:#3fb950; } .blue { color:#79c0ff; } .orange { color:#f0883e; } .white { color:var(--text); }
+
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.75); display:none; align-items:center; justify-content:center; z-index:500; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:24px; width:340px; max-width:95vw; }
+  .modal h3 { font-size:15px; margin-bottom:16px; }
+  .input-group { margin-bottom:12px; }
+  .input-group label { font-size:12px; color:var(--muted); display:block; margin-bottom:4px; }
+  .input-group input, .input-group select { width:100%; background:var(--bg); border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:inherit; font-size:13px; padding:8px 10px; outline:none; }
+  .input-group input:focus, .input-group select:focus { border-color:var(--accent2); }
+
+  .spinner { display:inline-block; width:14px; height:14px; border:2px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin .6s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  .toast { position:fixed; bottom:24px; right:24px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:12px 18px; font-size:13px; display:flex; align-items:center; gap:8px; transform:translateY(80px); opacity:0; transition:all .3s cubic-bezier(.34,1.56,.64,1); z-index:999; max-width:320px; }
+  .toast.show { transform:translateY(0); opacity:1; }
+  .toast.success { border-color:var(--accent); }
+  .toast.error   { border-color:var(--accent3); }
+
+  .empty { text-align:center; padding:36px; color:var(--muted); font-size:13px; }
+  .empty .icon { font-size:28px; margin-bottom:8px; }
+
+  /* STEPS */
+  .steps { display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+  .step { display:flex; gap:10px; align-items:flex-start; font-size:12px; color:var(--muted); line-height:1.5; }
+  .step-num { background:var(--accent2); color:#fff; border-radius:50%; width:20px; height:20px; flex-shrink:0; display:flex;align-items:center;justify-content:center; font-size:11px; font-weight:700; margin-top:1px; }
+  code { background:var(--surface2); border:1px solid var(--border); border-radius:4px; padding:1px 5px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#f0883e; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">📦</div>
+  <div>
+    <h1>Laporan Orderan SAF</h1>
+    <p>Auto-sync ke Google Sheets</p>
+  </div>
+</header>
+
+<!-- SETUP BANNER -->
+<div class="setup-banner" id="setupBanner">
+  <div class="icon">⚙️</div>
+  <div style="width:100%">
+    <h3>Setup Google Sheets — Sekali Aja!</h3>
+    <p>Paste URL Google Apps Script kamu di sini, lalu data orderan akan langsung masuk ke Google Sheets otomatis.</p>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><span>Buka <a href="https://script.google.com" target="_blank" style="color:#79c0ff">script.google.com</a> → New Project</span></div>
+      <div class="step"><div class="step-num">2</div><span>Hapus kode default, paste isi file <code>google_apps_script.js</code> yang sudah kamu download</span></div>
+      <div class="step"><div class="step-num">3</div><span>Klik <code>Deploy</code> → <code>New Deployment</code> → Type: <code>Web app</code> → Execute as: <code>Me</code> → Who has access: <code>Anyone</code></span></div>
+      <div class="step"><div class="step-num">4</div><span>Copy URL deployment-nya, paste di bawah ini 👇</span></div>
+    </div>
+    <input type="text" id="scriptUrl" placeholder="https://script.google.com/macros/s/XXXX/exec" oninput="saveUrl()">
+    <div style="margin-top:8px;display:flex;gap:8px;">
+      <button class="btn btn-blue" style="font-size:12px;padding:7px 14px" onclick="testConnection()">🔌 Test Koneksi</button>
+      <span id="connStatus" style="font-size:12px;color:var(--muted);align-self:center"></span>
+    </div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat"><div class="s-label">Total Orderan</div><div class="s-val white" id="statTotal">0</div></div>
+  <div class="stat"><div class="s-label">Total Harga</div><div class="s-val blue" id="statHarga">Rp 0</div></div>
+  <div class="stat"><div class="s-label">Total Profit</div><div class="s-val green" id="statProfit">Rp 0</div></div>
+  <div class="stat"><div class="s-label">Saldo Bersih</div><div class="s-val orange" id="statSaldo">Rp 0</div></div>
+</div>
+
+<!-- INPUT + PREVIEW -->
+<div class="container">
+  <div class="card">
+    <div class="card-header"><span>📋</span><h2>Paste Teks Orderan</h2></div>
+    <div class="card-body">
+      <textarea id="orderText" placeholder="BISMILLAH INV SAF#271
+Orderan 24/04/2026
+Nama : Lusi
+Alamat Lengkap : taman kota mas blok D5 12A RT 004 RW 009
+Kelurahan : tanjung uma
+Kecamatan : lubuk baja
+Kab/Kota : batam
+Prov : Kepri
+No HP : 085272788651
+Orderan : 2 Box Novia Free Scraf
+Total : Rp. 1.805.000
+Ongkir : JNE Free Ongkir
+COD"></textarea>
+      <div class="btn-row">
+        <button class="btn btn-blue" onclick="parseOrder()">⚡ Parse Orderan</button>
+        <button class="btn btn-ghost" onclick="clearInput()">🗑 Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span>👁</span><h2>Preview Hasil Parse</h2></div>
+    <div class="card-body" id="previewBody">
+      <div class="empty"><div class="icon">🔍</div>Paste teks orderan lalu klik Parse</div>
+    </div>
+  </div>
+</div>
+
+<!-- TABLE -->
+<div class="full-width">
+  <div class="card">
+    <div class="card-header" style="justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:8px;"><span>📊</span><h2>Riwayat Orderan (lokal)</h2></div>
+      <button class="btn btn-ghost" onclick="clearAll()" style="font-size:12px;padding:6px 12px">🗑 Hapus Semua</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>#</th><th>Tgl</th><th>Invoice</th><th>Nama</th><th>Product</th>
+          <th>Transaksi</th><th>Harga</th><th>Ongkir</th><th>Modal</th>
+          <th>Profit</th><th>Status</th><th>Sync</th>
+        </tr></thead>
+        <tbody id="orderBody"><tr><td colspan="12"><div class="empty"><div class="icon">📭</div>Belum ada orderan</div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3>⚙️ Lengkapi Data Orderan</h3>
+    <div class="input-group"><label>Modal / HPP (Rp)</label><input type="number" id="modalHPP" placeholder="contoh: 520280"></div>
+    <div class="input-group"><label>Status Pembayaran</label>
+      <select id="modalStatus"><option>Paid</option><option>Pending</option><option>Cancel</option></select>
+    </div>
+    <div class="input-group"><label>Tarik Dana (Rp) — opsional</label><input type="number" id="modalTarik" placeholder="0"></div>
+    <div class="input-group"><label>Keterangan — opsional</label><input type="text" id="modalKet" placeholder=""></div>
+    <div class="btn-row">
+      <button class="btn btn-green" id="btnSimpan" onclick="confirmAdd()">✅ Simpan & Kirim ke Sheets</button>
+      <button class="btn btn-ghost" onclick="closeModal()">Batal</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let orders = JSON.parse(localStorage.getItem('saf_orders_v2') || '[]');
+let pendingOrder = null;
+
+function save() { localStorage.setItem('saf_orders_v2', JSON.stringify(orders)); }
+function fmt(n) { return n || n===0 ? 'Rp ' + Number(n).toLocaleString('id-ID') : '-'; }
+
+function getUrl() { return document.getElementById('scriptUrl').value.trim(); }
+function saveUrl() { localStorage.setItem('saf_script_url', getUrl()); }
+
+// Load saved URL
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem('saf_script_url');
+  if (saved) {
+    document.getElementById('scriptUrl').value = saved;
+    document.getElementById('setupBanner').classList.add('connected');
+    document.getElementById('connStatus').textContent = '✅ URL tersimpan';
+    document.getElementById('connStatus').style.color = '#3fb950';
+  }
+  renderTable();
+  renderStats();
+});
+
+async function testConnection() {
+  const url = getUrl();
+  if (!url) { showToast('Paste URL dulu bro!', 'error'); return; }
+  const btn = document.querySelector('.setup-banner .btn-blue');
+  btn.innerHTML = '<span class="spinner"></span> Testing...';
+  btn.disabled = true;
+  try {
+    const res = await fetch(url);
+    const txt = await res.text();
+    document.getElementById('setupBanner').classList.add('connected');
+    document.querySelector('.setup-banner h3').textContent = '✅ Terhubung ke Google Sheets!';
+    document.getElementById('connStatus').textContent = '✅ Koneksi berhasil!';
+    document.getElementById('connStatus').style.color = '#3fb950';
+    showToast('✅ Berhasil terhubung ke Google Sheets!', 'success');
+  } catch(e) {
+    document.getElementById('connStatus').textContent = '❌ Gagal konek, cek URL';
+    document.getElementById('connStatus').style.color = '#f85149';
+    showToast('❌ Gagal konek. Cek URL & pastikan deployment sudah benar.', 'error');
+  }
+  btn.innerHTML = '🔌 Test Koneksi';
+  btn.disabled = false;
+}
+
+function parseOrder() {
+  const text = document.getElementById('orderText').value.trim();
+  if (!text) { showToast('Teks orderan kosong!', 'error'); return; }
+
+  const o = {};
+  let tgl = text.match(/Orderan\s+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4})/i) || text.match(/(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4})/);
+  o.tanggal = tgl ? tgl[1] : new Date().toLocaleDateString('id-ID');
+
+  let inv = text.match(/(?:INV|Invoice)\s*(SAF#?\d+)/i) || text.match(/(SAF#\d+)/i);
+  o.invoice = inv ? inv[1].replace(/SAF(\d)/,'SAF#$1') : '';
+
+  let nama = text.match(/Nama\s*:\s*(.+)/i);
+  o.nama = nama ? nama[1].trim() : '';
+
+  let alamatMatch = text.match(/Alamat[^:]*:\s*([\s\S]*?)(?=No\s*HP|Orderan\s*:|Total\s*:|Ongkir|COD|TF\s|BSS|$)/i);
+  o.alamat = alamatMatch ? alamatMatch[1].replace(/\n/g,' ').replace(/\s+/g,' ').trim() : '';
+
+  let hp = text.match(/No\.?\s*HP\s*:\s*([0-9\+\-\s]+)/i);
+  o.nohp = hp ? hp[1].trim().replace(/\s/g,'') : '';
+
+  let prod = text.match(/Orderan\s*:\s*(.+)/i);
+  o.product = prod ? prod[1].trim() : '';
+  let qtyMatch = o.product.match(/^(\d+)\s*[Bb]ox/);
+  o.qty = qtyMatch ? qtyMatch[1] + ' Box' : o.product;
+
+  let harga = text.match(/Total\s*:\s*Rp\.?\s*([\d.,]+)/i);
+  if (harga) {
+    let raw = harga[1].replace(/\./g,'').replace(',','');
+    o.harga = parseInt(raw);
+  } else { o.harga = 0; }
+
+  let ongkirLine = text.match(/Ongkir\s*:\s*(.+)/i);
+  o.ongkirNote = ongkirLine ? ongkirLine[1].trim() : '';
+  let ongkirNum = o.ongkirNote.match(/Rp\.?\s*([\d.,]+)/i);
+  o.ongkir = ongkirNum ? parseInt(ongkirNum[1].replace(/[.,]/g,'')) : 0;
+
+  let trans = '';
+  if (/\bCOD\b.*JNE|JNE.*\bCOD\b/i.test(text)) trans = 'COD JNE';
+  else if (/\bCOD\b.*LION|LION.*\bCOD\b/i.test(text)) trans = 'COD LION';
+  else if (/\bCOD\b.*SICEPAT|SICEPAT.*\bCOD\b/i.test(text)) trans = 'COD SICEPAT';
+  else if (/\bCOD\b/i.test(text)) trans = 'COD JNE';
+  else if (/TF.*BCA|BCA/i.test(text)) trans = 'TF BCA';
+  else if (/TF.*MANDIRI|MANDIRI/i.test(text)) trans = 'TF MANDIRI';
+  else if (/TF.*BRI|BRI/i.test(text)) trans = 'TF BRI';
+  else if (/BSS/i.test(text)) trans = 'BSS';
+  o.transaksi = trans;
+
+  pendingOrder = o;
+  renderPreview(o);
+  document.getElementById('modalHPP').value = '';
+  document.getElementById('modalStatus').value = 'Paid';
+  document.getElementById('modalTarik').value = '';
+  document.getElementById('modalKet').value = '';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function renderPreview(o) {
+  const transTag = o.transaksi.startsWith('COD') ? 'tag-cod' : o.transaksi.startsWith('TF') ? 'tag-tf' : 'tag-bss';
+  document.getElementById('previewBody').innerHTML = `
+    <div class="preview-grid">
+      <div class="preview-field"><label>Tanggal</label><div class="val">${o.tanggal}</div></div>
+      <div class="preview-field"><label>No Invoice</label><div class="val">${o.invoice||'-'}</div></div>
+      <div class="preview-field"><label>Nama</label><div class="val">${o.nama}</div></div>
+      <div class="preview-field"><label>No HP</label><div class="val">${o.nohp}</div></div>
+      <div class="preview-field full"><label>Alamat</label><div class="val">${o.alamat}</div></div>
+      <div class="preview-field"><label>Product</label><div class="val">${o.product}</div></div>
+      <div class="preview-field"><label>Transaksi</label><div class="val"><span class="tag ${transTag}">${o.transaksi||'-'}</span></div></div>
+      <div class="preview-field"><label>Harga</label><div class="val num">${fmt(o.harga)}</div></div>
+      <div class="preview-field"><label>Ongkir</label><div class="val num">${o.ongkir>0?fmt(o.ongkir):'🆓 Free'}</div></div>
+    </div>`;
+}
+
+async function confirmAdd() {
+  const url = getUrl();
+  if (!url) { showToast('⚠️ Setup URL Google Script dulu!', 'error'); return; }
+
+  const hpp   = parseInt(document.getElementById('modalHPP').value) || 0;
+  const status= document.getElementById('modalStatus').value;
+  const tarik = parseInt(document.getElementById('modalTarik').value) || 0;
+  const ket   = document.getElementById('modalKet').value.trim();
+
+  const o = { ...pendingOrder, hpp, status, tarik, ket };
+  o.tagihan = o.harga + o.ongkir;
+  o.profit  = o.harga - o.hpp - o.ongkir;
+  const prev = orders.length > 0 ? orders[orders.length-1].saldo : 0;
+  o.saldo = prev + o.profit - o.tarik;
+  o.no    = orders.length + 1;
+  o.synced = false;
+
+  // Kirim ke Google Sheets
+  const btn = document.getElementById('btnSimpan');
+  btn.innerHTML = '<span class="spinner"></span> Mengirim ke Sheets...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(o)
+    });
+    const result = await res.json();
+    if (result.status === 'ok') {
+      o.synced = true;
+      o.sheetRow = result.row;
+      showToast(`✅ ${o.invoice||o.nama} berhasil masuk ke Google Sheets! (baris ${result.row})`, 'success');
+    } else {
+      showToast('⚠️ Data tersimpan lokal, tapi gagal sync ke Sheets: ' + result.message, 'error');
+    }
+  } catch(e) {
+    showToast('⚠️ Data tersimpan lokal, tapi gagal konek ke Sheets. Cek internet/URL.', 'error');
+  }
+
+  orders.push(o);
+  save();
+  closeModal();
+  clearInput();
+  renderTable();
+  renderStats();
+  btn.innerHTML = '✅ Simpan & Kirim ke Sheets';
+  btn.disabled = false;
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+function clearInput() {
+  document.getElementById('orderText').value = '';
+  document.getElementById('previewBody').innerHTML = `<div class="empty"><div class="icon">🔍</div>Paste teks orderan lalu klik Parse</div>`;
+}
+function clearAll() {
+  if (!confirm('Hapus semua riwayat lokal?')) return;
+  orders = []; save(); renderTable(); renderStats();
+  showToast('🗑 Riwayat lokal dihapus', 'error');
+}
+
+function renderTable() {
+  const tbody = document.getElementById('orderBody');
+  if (!orders.length) {
+    tbody.innerHTML = `<tr><td colspan="12"><div class="empty"><div class="icon">📭</div>Belum ada orderan</div></td></tr>`;
+    return;
+  }
+  const transTag = t => t.startsWith('COD')?'tag-cod':t.startsWith('TF')?'tag-tf':'tag-bss';
+  tbody.innerHTML = orders.map((o,i) => `<tr>
+    <td style="color:var(--muted)">${o.no}</td>
+    <td>${o.tanggal}</td>
+    <td><b style="color:#79c0ff">${o.invoice||'-'}</b></td>
+    <td>${o.nama}</td>
+    <td style="font-size:10px">${o.product}</td>
+    <td><span class="tag ${transTag(o.transaksi)}">${o.transaksi}</span></td>
+    <td class="num">${fmt(o.harga)}</td>
+    <td class="num" style="color:var(--muted)">${o.ongkir>0?fmt(o.ongkir):'🆓'}</td>
+    <td class="num" style="color:var(--muted)">${fmt(o.hpp)}</td>
+    <td class="${o.profit>=0?'profit':'loss'}">${fmt(o.profit)}</td>
+    <td><span class="tag" style="background:${o.status==='Paid'?'#1a4a1a':'#4a3a1a'};color:${o.status==='Paid'?'#3fb950':'#f0883e'}">${o.status}</span></td>
+    <td style="font-size:11px">${o.synced?'✅ Synced':'⚠️ Lokal'}</td>
+  </tr>`).join('');
+}
+
+function renderStats() {
+  const total  = orders.length;
+  const harga  = orders.reduce((s,o)=>s+o.harga,0);
+  const profit = orders.reduce((s,o)=>s+o.profit,0);
+  const saldo  = orders.length>0?orders[orders.length-1].saldo:0;
+  document.getElementById('statTotal').textContent  = total;
+  document.getElementById('statHarga').textContent  = fmt(harga);
+  document.getElementById('statProfit').textContent = fmt(profit);
+  document.getElementById('statSaldo').textContent  = fmt(saldo);
+}
+
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast ${type} show`;
+  setTimeout(()=>t.classList.remove('show'), 4000);
+}
+
+document.getElementById('modalOverlay').addEventListener('click', e => { if(e.target===e.currentTarget) closeModal(); });
+</script>
+</body>
+</html>
