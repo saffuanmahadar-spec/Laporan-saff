@@ -244,7 +244,16 @@ function save() { localStorage.setItem('saf_orders_v2', JSON.stringify(orders));
 function fmt(n) { return n || n===0 ? 'Rp ' + Number(n).toLocaleString('id-ID') : '-'; }
 
 function getUrl() { return document.getElementById('scriptUrl').value.trim(); }
-function saveUrl() { localStorage.setItem('saf_script_url', getUrl()); }
+function saveUrl() { 
+  const url = getUrl();
+  localStorage.setItem('saf_script_url', url);
+  if (url && url.includes('script.google.com')) {
+    document.getElementById('setupBanner').classList.add('connected');
+    document.querySelector('.setup-banner h3').textContent = '✅ URL Google Script tersimpan!';
+    document.getElementById('connStatus').textContent = '✅ URL valid, siap digunakan!';
+    document.getElementById('connStatus').style.color = '#3fb950';
+  }
+}
 
 // Load saved URL
 window.addEventListener('load', () => {
@@ -356,7 +365,7 @@ function renderPreview(o) {
 
 async function confirmAdd() {
   const url = getUrl();
-  if (!url) { showToast('⚠️ Setup URL Google Script dulu!', 'error'); return; }
+  if (!url || !url.includes('script.google.com')) { showToast('⚠️ Paste URL Google Script di kolom setup dulu!', 'error'); return; }
 
   const hpp   = parseInt(document.getElementById('modalHPP').value) || 0;
   const status= document.getElementById('modalStatus').value;
