@@ -92,8 +92,8 @@
   .profit { color:#3fb950; font-family:'JetBrains Mono',monospace; font-weight:700; }
   .loss   { color:#f85149; font-family:'JetBrains Mono',monospace; font-weight:700; }
 
-  .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; max-width:1100px; margin:16px auto; padding:0 16px; }
-  @media(max-width:768px) { .stats { grid-template-columns:repeat(2,1fr); } }
+  .stats { display:grid; grid-template-columns:repeat(6,1fr); gap:12px; max-width:1100px; margin:16px auto 4px; padding:0 16px; }
+  @media(max-width:768px) { .stats { grid-template-columns:repeat(3,1fr); } }
   .stat { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
   .stat .s-label { font-size:11px; color:var(--muted); margin-bottom:4px; }
   .stat .s-val { font-size:18px; font-weight:800; font-family:'JetBrains Mono',monospace; }
@@ -159,9 +159,22 @@
 <!-- STATS -->
 <div class="stats">
   <div class="stat"><div class="s-label">Total Orderan</div><div class="s-val white" id="statTotal">0</div></div>
-  <div class="stat"><div class="s-label">Total Harga</div><div class="s-val blue" id="statHarga">Rp 0</div></div>
+  <div class="stat"><div class="s-label">Omset</div><div class="s-val blue" id="statHarga">Rp 0</div></div>
+  <div class="stat"><div class="s-label">Total Ongkir</div><div class="s-val orange" id="statOngkir">Rp 0</div></div>
   <div class="stat"><div class="s-label">Total Profit</div><div class="s-val green" id="statProfit">Rp 0</div></div>
-  <div class="stat"><div class="s-label">Saldo Bersih</div><div class="s-val orange" id="statSaldo">Rp 0</div></div>
+  <div class="stat"><div class="s-label">Total Transaksi</div><div class="s-val white" id="statTransaksi">0</div></div>
+  <div class="stat"><div class="s-label">Total Box</div><div class="s-val white" id="statBox">0</div></div>
+</div>
+<div class="stats" style="margin-top:-8px">
+  <div class="stat" style="grid-column:span 2"><div class="s-label">📦 Breakdown Produk</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:6px">
+      <span class="s-label">Novia: <b style="color:#3fb950" id="boxNovia">0</b></span>
+      <span class="s-label">DVN: <b style="color:#79c0ff" id="boxDVN">0</b></span>
+      <span class="s-label">Erojan: <b style="color:#f0883e" id="boxErojan">0</b></span>
+      <span class="s-label">Coffiy: <b style="color:#d2a8ff" id="boxCoffiy">0</b></span>
+      <span class="s-label">S-Glow: <b style="color:#ff7b72" id="boxSGlow">0</b></span>
+    </div>
+  </div>
 </div>
 
 <!-- INPUT + PREVIEW -->
@@ -371,11 +384,12 @@ async function confirmAdd() {
   if (!url || !url.includes('script.google.com')) { showToast('⚠️ Paste URL Google Script di kolom setup dulu!', 'error'); return; }
 
   const tagihan = parseInt(document.getElementById('modalTagihan').value) || 0;
+  const ongkirManual = parseInt(document.getElementById('modalOngkir').value) || 0;
   const status= document.getElementById('modalStatus').value;
   const tarik = parseInt(document.getElementById('modalTarik').value) || 0;
   const ket   = document.getElementById('modalKet').value.trim();
 
-  const o = { ...pendingOrder, hpp: tagihan, tagihan_supplier: tagihan, status, tarik, ket };
+  const o = { ...pendingOrder, hpp: tagihan, tagihan_supplier: tagihan, ongkir: ongkirManual, status, tarik, ket };
   o.tagihan = o.harga + o.ongkir;
   o.profit  = o.harga - o.hpp - o.ongkir;
   const prev = orders.length > 0 ? orders[orders.length-1].saldo : 0;
@@ -449,14 +463,29 @@ function renderTable() {
 }
 
 function renderStats() {
-  const total  = orders.length;
-  const harga  = orders.reduce((s,o)=>s+o.harga,0);
-  const profit = orders.reduce((s,o)=>s+o.profit,0);
-  const saldo  = orders.length>0?orders[orders.length-1].saldo:0;
-  document.getElementById('statTotal').textContent  = total;
-  document.getElementById('statHarga').textContent  = fmt(harga);
-  document.getElementById('statProfit').textContent = fmt(profit);
-  document.getElementById('statSaldo').textContent  = fmt(saldo);
+  const total   = orders.length;
+  const harga   = orders.reduce((s,o)=>s+o.harga,0);
+  const ongkir  = orders.reduce((s,o)=>s+(o.ongkir||0),0);
+  const profit  = orders.reduce((s,o)=>s+o.profit,0);
+
+  // Count boxes per product
+  const countBox = (keyword) => orders.reduce((s,o) => {
+    const p = (o.product||'').toLowerCase();
+    const q = parseInt((o.qty||'1').match(/\d+/)?.[0]||'1');
+    return p.includes(keyword.toLowerCase()) ? s+q : s;
+  }, 0);
+
+  document.getElementById('statTotal').textContent   = total;
+  document.getElementById('statHarga').textContent   = fmt(harga);
+  document.getElementById('statOngkir').textContent  = fmt(ongkir);
+  document.getElementById('statProfit').textContent  = fmt(profit);
+  document.getElementById('statTransaksi').textContent = total;
+  document.getElementById('statBox').textContent     = orders.reduce((s,o)=>s+parseInt((o.qty||'1').match(/\d+/)?.[0]||'1'),0);
+  document.getElementById('boxNovia').textContent    = countBox('novia');
+  document.getElementById('boxDVN').textContent      = countBox('dvn');
+  document.getElementById('boxErojan').textContent   = countBox('erojan');
+  document.getElementById('boxCoffiy').textContent   = countBox('coffiy');
+  document.getElementById('boxSGlow').textContent    = countBox('s-glow') + countBox('sglow');
 }
 
 function showToast(msg, type='success') {
