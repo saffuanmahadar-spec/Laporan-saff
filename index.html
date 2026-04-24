@@ -208,7 +208,7 @@ COD"></textarea>
       <table>
         <thead><tr>
           <th>#</th><th>Tgl</th><th>Invoice</th><th>Nama</th><th>Product</th>
-          <th>Transaksi</th><th>Harga</th><th>Ongkir</th><th>Modal</th>
+          <th>Transaksi</th><th>Harga</th><th>Ongkir</th><th>Tagihan</th>
           <th>Profit</th><th>Status</th><th>Sync</th>
         </tr></thead>
         <tbody id="orderBody"><tr><td colspan="12"><div class="empty"><div class="icon">📭</div>Belum ada orderan</div></td></tr></tbody>
@@ -221,7 +221,7 @@ COD"></textarea>
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
     <h3>⚙️ Lengkapi Data Orderan</h3>
-    <div class="input-group"><label>Modal / HPP (Rp)</label><input type="number" id="modalHPP" placeholder="contoh: 520280"></div>
+    <div class="input-group"><label>Tagihan (Rp)</label><input type="number" id="modalTagihan" placeholder="contoh: 450000"></div>
     <div class="input-group"><label>Status Pembayaran</label>
       <select id="modalStatus"><option>Paid</option><option>Pending</option><option>Cancel</option></select>
     </div>
@@ -340,7 +340,7 @@ function parseOrder() {
 
   pendingOrder = o;
   renderPreview(o);
-  document.getElementById('modalHPP').value = '';
+  document.getElementById('modalTagihan').value = '';
   document.getElementById('modalStatus').value = 'Paid';
   document.getElementById('modalTarik').value = '';
   document.getElementById('modalKet').value = '';
@@ -367,12 +367,12 @@ async function confirmAdd() {
   const url = getUrl();
   if (!url || !url.includes('script.google.com')) { showToast('⚠️ Paste URL Google Script di kolom setup dulu!', 'error'); return; }
 
-  const hpp   = parseInt(document.getElementById('modalHPP').value) || 0;
+  const tagihan = parseInt(document.getElementById('modalTagihan').value) || 0;
   const status= document.getElementById('modalStatus').value;
   const tarik = parseInt(document.getElementById('modalTarik').value) || 0;
   const ket   = document.getElementById('modalKet').value.trim();
 
-  const o = { ...pendingOrder, hpp, status, tarik, ket };
+  const o = { ...pendingOrder, hpp: tagihan, tagihan_supplier: tagihan, status, tarik, ket };
   o.tagihan = o.harga + o.ongkir;
   o.profit  = o.harga - o.hpp - o.ongkir;
   const prev = orders.length > 0 ? orders[orders.length-1].saldo : 0;
