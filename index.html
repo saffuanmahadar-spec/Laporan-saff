@@ -308,9 +308,11 @@ function parseOrder() {
   let alamatMatch = text.match(/Alamat[^:]*:\s*([\s\S]*?)(?=No\s*HP|Orderan\s*:|Total\s*:|Ongkir|COD|TF\s|BSS|$)/i);
   o.alamat = alamatMatch ? alamatMatch[1].replace(/\n/g,' ').replace(/\s+/g,' ').trim() : '';
 
-  let hp = text.match(/(?:No\.?\s*HP|Hp|No\.?\s*Telp|Telp|WA|Whatsapp)\s*:\s*([0-9\+\-\s]+)/i)
-        || text.match(/\b(08[0-9]{8,11})\b/);
-  o.nohp = hp ? hp[1].trim().replace(/\s/g,'') : '';
+  // Cari No HP per baris supaya tidak keambil baris lain
+  let hpLine = text.split('\n').find(l => /(?:No\.?\s*HP|^Hp|No\.?\s*Telp|Telp\b|WA\b)/i.test(l));
+  let hp = hpLine ? hpLine.match(/([0-9\+][0-9\-\s]{7,14})/) : null;
+  if (!hp) hp = text.match(/\b(08[0-9]{8,11})\b/);
+  o.nohp = hp ? hp[1].trim().replace(/[\s\-]/g,'') : '';
 
   let prod = text.match(/Orderan\s*:\s*(.+)/i);
   o.product = prod ? prod[1].trim() : '';
